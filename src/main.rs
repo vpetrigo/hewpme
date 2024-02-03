@@ -1,14 +1,14 @@
 use std::collections::HashSet;
 use std::sync::Arc;
+use std::thread;
 use std::time::Duration;
 
 use tokio::sync::Mutex;
-
+use twitch_irc::{ClientConfig, SecureTCPTransport, TwitchIRCClient};
 use twitch_irc::login::StaticLoginCredentials;
-use twitch_irc::{ClientConfig, TwitchIRCClient, SecureTCPTransport};
 use twitch_irc::message::ServerMessage::Privmsg;
 
-// static mut CHATTERS_LIST: HashSet<String> = HashSet::new();
+mod server;
 
 type ChattersList = Arc<Mutex<HashSet<String>>>;
 
@@ -16,12 +16,14 @@ fn create_new_chatters_list() -> ChattersList {
     Arc::new(Mutex::new(HashSet::new()))
 }
 
-
 fn main() {
-    let chatters_list =create_new_chatters_list();
+    let chatters_list = create_new_chatters_list();
     let client_list = chatters_list.clone();
     let rt = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
 
+    let webserver_handle = thread::spawn(|| {
+        server::run_server()
+    });
     let checker_handle = rt.spawn(async move {
         simple_checker(chatters_list).await;
     });
@@ -33,13 +35,7 @@ fn main() {
     for i in [checker_handle, twitch_client_handler] {
         rt.block_on(i).unwrap();
     }
-
-    // rt.spawn(async move {
-    //     simple_checker(chatters_list).await;
-    // });
-    // rt.block_on(
-    //     run_twitch_irc_client(client_list)
-    // )
+    webserver_handle.join().expect("Unable to wait for the thread");
 }
 
 async fn run_twitch_irc_client(chatters_list: ChattersList) {
