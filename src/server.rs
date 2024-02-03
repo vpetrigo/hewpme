@@ -8,8 +8,10 @@ use serde_json::Value;
 use tinytemplate::TinyTemplate;
 
 #[derive(Serialize, Debug)]
-struct Content<T> where
-    T: IntoIterator {
+struct Content<T>
+where
+    T: IntoIterator,
+{
     chatters_list: T,
 }
 
@@ -23,10 +25,7 @@ type Result<T> = std::result::Result<T, ServerError>;
 
 impl core::fmt::Display for ServerError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f,
-               "kind: {}, message: {}",
-               self.kind, self.message
-        )
+        write!(f, "kind: {}, message: {}", self.kind, self.message)
     }
 }
 
@@ -80,11 +79,12 @@ fn read_index_template() -> Result<String> {
     Ok(buffer)
 }
 
-fn add_chatters_to_index_page<T: IntoIterator + Serialize>(chatters_list: T, index_template: String) -> Result<String> {
+fn add_chatters_to_index_page<T: IntoIterator + Serialize>(
+    chatters_list: T,
+    index_template: String,
+) -> Result<String> {
     let mut tt = TinyTemplate::new();
-    let context = Content {
-        chatters_list
-    };
+    let context = Content { chatters_list };
 
     tt.add_template("index", index_template.as_str())?;
     tt.add_formatter("index", chatter_name_formatter);
