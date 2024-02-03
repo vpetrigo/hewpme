@@ -1,0 +1,12 @@
+[package]
+name = "hewpme"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1.36", features = ["rt"] }
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
+twitch-irc = { version = "~5", features = ["transport-tcp", "transport-tcp-native-tls"] }
