@@ -8,8 +8,9 @@ use serde_json::Value;
 use tinytemplate::TinyTemplate;
 
 #[derive(Serialize, Debug)]
-struct Content<'a, T> {
-    chatters_list: &'a [T],
+struct Content<T> where
+    T: IntoIterator {
+    chatters_list: T,
 }
 
 #[derive(Debug)]
@@ -79,7 +80,7 @@ fn read_index_template() -> Result<String> {
     Ok(buffer)
 }
 
-fn add_chatters_to_index_page<T: Serialize>(chatters_list: &[T], index_template: String) -> Result<String> {
+fn add_chatters_to_index_page<T: IntoIterator + Serialize>(chatters_list: T, index_template: String) -> Result<String> {
     let mut tt = TinyTemplate::new();
     let context = Content {
         chatters_list
