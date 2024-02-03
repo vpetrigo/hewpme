@@ -12,12 +12,22 @@ struct Content<'a, T> {
     chatters_list: &'a [T],
 }
 
+#[derive(Debug)]
 struct ServerError {
     kind: String,
     message: String,
 }
 
 type Result<T> = std::result::Result<T, ServerError>;
+
+impl core::fmt::Display for ServerError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f,
+               "kind: {}, message: {}",
+               self.kind, self.message
+        )
+    }
+}
 
 impl From<std::io::Error> for ServerError {
     fn from(value: std::io::Error) -> Self {
