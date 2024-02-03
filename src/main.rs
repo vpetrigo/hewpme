@@ -1,20 +1,14 @@
-use std::collections::HashSet;
-use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
-use tokio::sync::Mutex;
 use twitch_irc::{ClientConfig, SecureTCPTransport, TwitchIRCClient};
 use twitch_irc::login::StaticLoginCredentials;
 use twitch_irc::message::ServerMessage::Privmsg;
 
+use helper::{ChattersList, create_new_chatters_list};
+
 mod server;
-
-type ChattersList = Arc<Mutex<HashSet<String>>>;
-
-fn create_new_chatters_list() -> ChattersList {
-    Arc::new(Mutex::new(HashSet::new()))
-}
+mod helper;
 
 fn main() {
     let chatters_list = create_new_chatters_list();
