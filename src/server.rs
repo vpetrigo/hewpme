@@ -51,7 +51,7 @@ impl From<tinytemplate::error::Error> for ServerError {
 
 pub(crate) fn run_server(chatters_list: ChattersList) {
     rouille::start_server("0.0.0.0:12345", move |request| {
-        let response = rouille::match_assets(&request, "public/");
+        let response = rouille::match_assets(request, "public/");
 
         if response.is_success() {
             return response;
