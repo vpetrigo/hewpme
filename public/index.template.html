@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <title>Chatters list</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./animate.js"></script>
 </head>
 <body>
-<div id="chatters_list">
-        <pre>
-{{ for value in chatters_list }}{ value | index }{{ endfor }}       </pre>
+<div id="container">
+    <p class="list_title">Активные чатерсы</p>
+    <p>{{ for value in chatters_list }}{ value | index }{{ endfor }}</p>
 </div>
 </body>
 </html>
