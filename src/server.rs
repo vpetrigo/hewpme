@@ -7,6 +7,8 @@ use serde::Serialize;
 use serde_json::Value;
 use tinytemplate::TinyTemplate;
 
+use crate::helper::ChattersList;
+
 #[derive(Serialize, Debug)]
 struct Content<T>
 where
@@ -47,11 +49,17 @@ impl From<tinytemplate::error::Error> for ServerError {
     }
 }
 
-pub(crate) fn run_server() {
+pub(crate) fn run_server(chatters_list: ChattersList) {
     rouille::start_server("0.0.0.0:12345", move |request| {
+        let response = rouille::match_assets(&request, "public/");
+
+        if response.is_success() {
+            return response;
+        }
+
         rouille::router!(request,
             (GET) (/) => {
-                if let Ok(page) = generate_delimited_text() {
+                if let Ok(page) = generate_chatters_list_text(&chatters_list) {
                     return rouille::Response::html(page)
                 }
 
@@ -62,11 +70,12 @@ pub(crate) fn run_server() {
     });
 }
 
-fn generate_delimited_text() -> Result<String> {
-    let dummy = ["Alex", "Bob", "Alice", "wer1346", "skylinego"];
+fn generate_chatters_list_text(chatters_list: &ChattersList) -> Result<String> {
     let template = read_index_template()?;
+    let guard = chatters_list.blocking_lock();
+    let chatters: Vec<_> = guard.iter().collect();
 
-    add_chatters_to_index_page(&dummy, template)
+    add_chatters_to_index_page(chatters, template)
 }
 
 fn read_index_template() -> Result<String> {
