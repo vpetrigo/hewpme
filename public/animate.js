@@ -3,7 +3,7 @@ window.onload = function () {
     const containerHeight = container.offsetHeight;
     const windowHeight = window.innerHeight;
     const creditsHeight = Math.ceil(containerHeight / windowHeight) * -100
-    const animationDuration = containerHeight / windowHeight * 10000;
+    const animationDuration = containerHeight / windowHeight * 20000;
 
     container.animate([
             {
