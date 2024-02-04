@@ -1,4 +1,3 @@
-use std::time::Duration;
 use std::{env, thread};
 
 use twitch_irc::login::StaticLoginCredentials;
@@ -18,17 +17,12 @@ fn main() {
         .build()
         .unwrap();
 
-    let webserver_handle = thread::spawn(|| server::run_server());
-    let checker_handle = rt.spawn(async move {
-        simple_checker(chatters_list).await;
-    });
+    let webserver_handle = thread::spawn(|| server::run_server(chatters_list));
     let twitch_client_handler = rt.spawn(async move {
         run_twitch_irc_client(client_list).await;
     });
 
-    for i in [checker_handle, twitch_client_handler] {
-        rt.block_on(i).unwrap();
-    }
+    rt.block_on(twitch_client_handler).unwrap();
     webserver_handle
         .join()
         .expect("Unable to wait for the thread");
@@ -68,18 +62,4 @@ async fn run_twitch_irc_client(chatters_list: ChattersList) {
     // keep the tokio executor alive.
     // If you return instead of waiting the background task will exit.
     join_handle.await.unwrap();
-}
-
-async fn simple_checker(chatters_list: ChattersList) {
-    loop {
-        chatters_list
-            .lock()
-            .await
-            .iter()
-            .by_ref()
-            .for_each(|chatter| {
-                println!("Chatter: {}", chatter);
-            });
-        tokio::time::sleep(Duration::from_secs(2)).await;
-    }
 }
