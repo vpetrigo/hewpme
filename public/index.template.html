@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Chatters list</title>
-    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./style.css"/>
     <script src="./animate.js"></script>
 </head>
 <body>
@@ -11,11 +11,11 @@
     <div id="container">
         <h1>Cпасибо за компанию!</h1>
         <p class="list_title">Новые подписчики</p>
-        <p>{{ for value in chatters_list }}{ value | index }{{ endfor }}</p>
+        <p>{{ for value in subscribers_list }}{ value | subscribers }{{ endfor }}</p>
         <p class="list_title">Новыве фолловеры</p>
-        <p>{{ for value in chatters_list }}{ value | index }{{ endfor }}</p>
+        <p>{{ for value in followers_list }}{ value | followers }{{ endfor }}</p>
         <p class="list_title">Активные чатерсы</p>
-        <p>{{ for value in chatters_list }}{ value | index }{{ endfor }}</p>
+        <p>{{ for value in chatters_list }}{ value | chatters }{{ endfor }}</p>
     </div>
 </div>
 </body>
