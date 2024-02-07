@@ -4,33 +4,43 @@ use twitch_irc::login::StaticLoginCredentials;
 use twitch_irc::message::ServerMessage::Privmsg;
 use twitch_irc::{ClientConfig, SecureTCPTransport, TwitchIRCClient};
 
+use crate::eventsub::run_eventsub_client;
+use crate::helper::create_new_twitch_event_list;
 use helper::{create_new_chatters_list, ChattersList};
 
-mod helper;
+mod eventsub;
+pub mod helper;
 mod server;
+pub mod websocket;
 
 fn main() {
     let chatters_list = create_new_chatters_list();
+    let events_list = create_new_twitch_event_list();
+    let events_list2 = events_list.clone();
     let client_list = chatters_list.clone();
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .unwrap();
+    tracing_subscriber::fmt::init();
 
-    let webserver_handle = thread::spawn(|| server::run_server(chatters_list));
+    let webserver_handle = thread::spawn(move || server::run_server(chatters_list, events_list));
+    let eventsub_client_handler = rt.spawn(async move {
+        run_eventsub_client(events_list2).await;
+    });
     let twitch_client_handler = rt.spawn(async move {
         run_twitch_irc_client(client_list).await;
     });
 
-    rt.block_on(twitch_client_handler).unwrap();
+    for handle in [eventsub_client_handler, twitch_client_handler] {
+        rt.block_on(handle).unwrap();
+    }
     webserver_handle
         .join()
         .expect("Unable to wait for the thread");
 }
 
 async fn run_twitch_irc_client(chatters_list: ChattersList) {
-    tracing_subscriber::fmt::init();
-
     // default configuration is to join chat as anonymous.
     let config = ClientConfig::default();
     let (mut incoming_messages, client) =
