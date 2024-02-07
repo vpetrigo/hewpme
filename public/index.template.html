@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>Chatters list</title>
-    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./style.css" />
     <script src="./animate.js"></script>
 </head>
 <body>
-<div id="container">
-    <p class="list_title">Активные чатерсы</p>
-    <p>{{ for value in chatters_list }}{ value | index }{{ endfor }}</p>
+<div id="content">
+    <div id="container">
+        <h1>Cпасибо за компанию!</h1>
+        <p class="list_title">Активные чатерсы</p>
+        <p>{{ for value in chatters_list }}{ value | index }{{ endfor }}</p>
+    </div>
 </div>
 </body>
 </html>

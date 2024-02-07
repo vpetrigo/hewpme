@@ -1,9 +1,11 @@
 window.onload = function () {
-    let container = document.getElementById("container");
+    const container = document.getElementById("container");
     const containerHeight = container.offsetHeight;
     const windowHeight = window.innerHeight;
-    const creditsHeight = Math.ceil(containerHeight / windowHeight) * -100
-    const animationDuration = containerHeight / windowHeight * 20000;
+    const creditsHeight = Math.ceil(containerHeight / windowHeight) * -100 - 10
+    const animationDuration = ((containerHeight / windowHeight * 100) + 100) * 60;
+
+    console.log(creditsHeight);
 
     container.animate([
             {
