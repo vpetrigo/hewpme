@@ -7,7 +7,7 @@ use serde::Serialize;
 use serde_json::Value;
 use tinytemplate::TinyTemplate;
 
-use crate::helper::ChattersList;
+use crate::helper::{ChattersList, SafeTwitchEventList};
 
 #[derive(Serialize, Debug)]
 struct Content<T>
@@ -49,7 +49,7 @@ impl From<tinytemplate::error::Error> for ServerError {
     }
 }
 
-pub(crate) fn run_server(chatters_list: ChattersList) {
+pub(crate) fn run_server(chatters_list: ChattersList, event_list: SafeTwitchEventList) {
     rouille::start_server("0.0.0.0:12345", move |request| {
         let response = rouille::match_assets(request, "public/");
 
@@ -59,7 +59,7 @@ pub(crate) fn run_server(chatters_list: ChattersList) {
 
         rouille::router!(request,
             (GET) (/) => {
-                if let Ok(page) = generate_chatters_list_text(&chatters_list) {
+                if let Ok(page) = generate_credit_page(&chatters_list, &event_list) {
                     return rouille::Response::html(page)
                 }
 
@@ -108,4 +108,19 @@ fn chatter_name_formatter(name: &Value, out: &mut String) -> tinytemplate::error
     }
 
     Ok(())
+}
+
+fn generate_credit_page(
+    chatters_list: &ChattersList,
+    event_list: &SafeTwitchEventList,
+) -> Result<String> {
+    let guard = event_list.get_followers();
+    println!("Followers:");
+    guard.iter().for_each(|e| println!("{e}"));
+
+    let guard = event_list.get_subscribers();
+    println!("Subscribers:");
+    guard.iter().for_each(|e| println!("{e}"));
+
+    generate_chatters_list_text(&chatters_list)
 }
