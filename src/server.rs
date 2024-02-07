@@ -15,6 +15,8 @@ where
     T: IntoIterator,
 {
     chatters_list: T,
+    followers_list: T,
+    subscribers_list: T,
 }
 
 #[derive(Debug)]
@@ -70,12 +72,14 @@ pub(crate) fn run_server(chatters_list: ChattersList, event_list: SafeTwitchEven
     });
 }
 
-fn generate_chatters_list_text(chatters_list: &ChattersList) -> Result<String> {
+fn generate_credits_text<T: IntoIterator + Serialize>(
+    chatters_list: T,
+    followers_list: T,
+    subscribers_list: T,
+) -> Result<String> {
     let template = read_index_template()?;
-    let guard = chatters_list.blocking_lock();
-    let chatters: Vec<_> = guard.iter().collect();
 
-    add_chatters_to_index_page(chatters, template)
+    add_chatters_to_index_page(chatters_list, followers_list, subscribers_list, template)
 }
 
 fn read_index_template() -> Result<String> {
@@ -90,13 +94,21 @@ fn read_index_template() -> Result<String> {
 
 fn add_chatters_to_index_page<T: IntoIterator + Serialize>(
     chatters_list: T,
+    followers_list: T,
+    subscribers_list: T,
     index_template: String,
 ) -> Result<String> {
     let mut tt = TinyTemplate::new();
-    let context = Content { chatters_list };
+    let context = Content {
+        chatters_list,
+        followers_list,
+        subscribers_list,
+    };
 
     tt.add_template("index", index_template.as_str())?;
-    tt.add_formatter("index", chatter_name_formatter);
+    tt.add_formatter("followers", chatter_name_formatter);
+    tt.add_formatter("subscribers", chatter_name_formatter);
+    tt.add_formatter("chatters", chatter_name_formatter);
 
     Ok(tt.render("index", &context)?)
 }
@@ -114,13 +126,14 @@ fn generate_credit_page(
     chatters_list: &ChattersList,
     event_list: &SafeTwitchEventList,
 ) -> Result<String> {
-    let guard = event_list.get_followers();
-    println!("Followers:");
-    guard.iter().for_each(|e| println!("{e}"));
+    let guard1 = chatters_list.blocking_lock();
+    let chatters = guard1.iter().collect::<Vec<_>>();
 
-    let guard = event_list.get_subscribers();
-    println!("Subscribers:");
-    guard.iter().for_each(|e| println!("{e}"));
+    let guard2 = event_list.get_followers();
+    let followers = guard2.iter().collect::<Vec<_>>();
 
-    generate_chatters_list_text(&chatters_list)
+    let guard3 = event_list.get_subscribers();
+    let subs = guard3.iter().collect::<Vec<_>>();
+
+    generate_credits_text(chatters, followers, subs)
 }
