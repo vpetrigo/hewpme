@@ -146,15 +146,11 @@ fn generate_credit_page(
     event_list: &SafeTwitchEventList,
 ) -> Result<String> {
     let guard1 = chatters_list.blocking_lock();
-    let chatters = guard1.iter().collect::<Vec<_>>();
-
     let guard2 = event_list.get_followers();
-    let followers = guard2.iter().collect::<Vec<_>>();
-
     let guard3 = event_list.get_subscribers();
-    let subs = guard3.iter().collect::<Vec<_>>();
 
-    let template_context = TemplateContext::<Vec<&String>>::new(chatters, followers, subs);
+    let template_context =
+        TemplateContext::new(guard1.to_owned(), guard2.to_owned(), guard3.to_owned());
 
     generate_credits_text(template_context)
 }
