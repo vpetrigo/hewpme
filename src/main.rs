@@ -4,9 +4,10 @@ use twitch_irc::login::StaticLoginCredentials;
 use twitch_irc::message::ServerMessage::Privmsg;
 use twitch_irc::{ClientConfig, SecureTCPTransport, TwitchIRCClient};
 
+use helper::{create_new_chatters_list, ChattersList};
+
 use crate::eventsub::run_eventsub_client;
 use crate::helper::create_new_twitch_event_list;
-use helper::{create_new_chatters_list, ChattersList};
 
 mod eventsub;
 pub mod helper;
