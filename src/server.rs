@@ -158,10 +158,3 @@ fn generate_credit_page(
 
     generate_credits_text(template_context)
 }
-//
-// fn get_template_context<T>(
-//     chatters: Vec<&String>,
-//     followers: Vec<&String>,
-//     subs: Vec<&String>,
-// ) -> TemplateContext<T> {
-// }
