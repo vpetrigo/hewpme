@@ -1,7 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Rampart+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&display=swap');
 
 :root {
-    --font: 'Rampart One', sans-serif;;
+    --font: 'Merriweather', serif;
 }
 
 html, body {
@@ -30,20 +30,25 @@ body {
 
 #container .list_title {
     font-family: var(--font);
-    font-size: 2.5em;
+    font-weight: 900;
+    font-style: italic;
+    font-size: 3.5em;
 }
 
 #container h1 {
     font-family: var(--font);
-    font-size: 3em;
+    font-weight: bold;
+    font-size: 5em;
     color: #16fefe;
-    text-shadow: 0 0 10px #16fefe, 0 0 20px #fff, 0 0 30px #0fbdd6;
+    text-shadow: 0 0 10px #16fefe, 0 0 20px #fff, 0 0 30px #4364ea;
 }
 
 #container p {
     font-family: var(--font);
-    font-size: 2em;
-    line-height: 40px;
+    font-size: 3em;
+    font-weight: bold;
+    line-height: 1.5em;
     color: #16fefe;
-    text-shadow: 0 0 10px #16fefe, 0 0 20px #fff, 0 0 30px #0fbdd6;
+    text-shadow: 0 0 10px #16fefe, 0 0 20px #ffffff, 0 0 30px #4364ea;
+    /*text-shadow: 2px 0 0 #f00, -2px 0 0 #f00, 0 2px 0 #f00, 0 -2px 0 #f00, 1px 1px #f00, -1px -1px 0 #f00, 1px -1px 0 #f00, -1px 1px 0 #f00;*/
 }
