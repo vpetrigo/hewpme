@@ -2,19 +2,13 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard};
 
+#[derive(Default)]
 pub struct TwitchEventList {
     followers_list: Mutex<HashSet<String>>,
     subscribers_list: Mutex<HashSet<String>>,
 }
 
 impl TwitchEventList {
-    pub fn new() -> Self {
-        return TwitchEventList {
-            followers_list: Mutex::new(HashSet::new()),
-            subscribers_list: Mutex::new(HashSet::new()),
-        };
-    }
-
     pub async fn add_follower<T: Into<String>>(&self, follower: T) {
         let mut guard = self.followers_list.lock().await;
 
@@ -44,5 +38,5 @@ pub fn create_new_chatters_list() -> ChattersList {
 }
 
 pub fn create_new_twitch_event_list() -> SafeTwitchEventList {
-    Arc::new(TwitchEventList::new())
+    Arc::new(TwitchEventList::default())
 }

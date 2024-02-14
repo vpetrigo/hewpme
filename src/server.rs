@@ -42,11 +42,11 @@ impl<T: IntoIterator + Serialize + Clone> TemplateContext<T> {
         let followers = if f > 0 { Some(followers_list) } else { None };
         let subscribers = if s > 0 { Some(subscriber_list) } else { None };
 
-        return TemplateContext {
+        TemplateContext {
             chatters,
             followers,
             subscribers,
-        };
+        }
     }
 }
 
@@ -129,11 +129,7 @@ fn add_chatters_to_index_page<T: IntoIterator + Serialize>(
     tt.add_formatter("subscribers", chatter_name_formatter);
     tt.add_formatter("chatters", chatter_name_formatter);
 
-    let result = tt.render("index", &context);
-
-    println!("{:?}", result);
-
-    result.map_err(|e| e.into())
+    Ok(tt.render("index", &context)?)
 }
 
 fn chatter_name_formatter(name: &Value, out: &mut String) -> tinytemplate::error::Result<()> {

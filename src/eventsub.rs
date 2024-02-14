@@ -6,7 +6,7 @@ use url::Url;
 use crate::helper::SafeTwitchEventList;
 use crate::websocket;
 
-const TEST_WEBSOCKET_URL: &'static str = "ws://127.0.0.1:8080/ws";
+const TEST_WEBSOCKET_URL: &str = "ws://127.0.0.1:8080/ws";
 
 // moderator:read:followers channel:read:subscriptions
 pub(crate) async fn run_eventsub_client(event_list: SafeTwitchEventList) {
@@ -42,7 +42,7 @@ pub(crate) async fn run_eventsub_client(event_list: SafeTwitchEventList) {
         event_list,
     );
 
-    match ws.run().await {
-        _ => panic!("Websocket client finished its execution"),
-    }
+    ws.run()
+        .await
+        .expect("Websocket client finished its execution");
 }
