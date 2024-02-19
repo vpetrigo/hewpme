@@ -101,7 +101,11 @@ fn create_token_context() -> UserTokenBuilder {
     let client_id = env::var("TWITCH_CLIENT_ID").unwrap();
     let client_secret = env::var("TWITCH_CLIENT_SECRET").unwrap();
     let mut builder = UserTokenBuilder::new(client_id, client_secret, redirect_url);
-    builder = builder.set_scopes(vec![twitch_oauth2::scopes::Scope::UserEdit]);
+
+    builder = builder.set_scopes(vec![
+        twitch_oauth2::scopes::Scope::ChannelReadSubscriptions,
+        twitch_oauth2::scopes::Scope::ModeratorReadFollowers,
+    ]);
     builder = builder.force_verify(true); // Defaults to false
 
     builder
@@ -181,10 +185,10 @@ async fn request_user_authentication() -> UserToken {
     let handle = Handle::current();
     let auth_server = handle.spawn(async move {
         run_auth_server(tx).await;
-    }); // 1
+    });
     let mut token_context = create_token_context();
-    let (url, csrf_token) = generate_token_url(&mut token_context); // 2
-                                                                    // Make your user navigate to this URL, for example
+    let (url, csrf_token) = generate_token_url(&mut token_context);
+    // Make your user navigate to this URL, for example
     println!("Visit this URL to authorize Twitch access: {}", url);
     let auth_response = rx
         .recv()
