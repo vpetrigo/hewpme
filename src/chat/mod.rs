@@ -5,13 +5,19 @@ use twitch_irc::message::ServerMessage::Privmsg;
 use twitch_irc::{ClientConfig, SecureTCPTransport, TwitchIRCClient};
 
 use crate::helper::ChattersList;
+use crate::utils::get_user_token;
 
 pub async fn run_twitch_irc_client(chatters_list: ChattersList) {
     // default configuration is to join chat as anonymous.
-    let config = ClientConfig::default();
+    let token = get_user_token().await;
+    let config = ClientConfig::new_simple(StaticLoginCredentials::new(
+        token.login.take().to_lowercase(),
+        Some(token.access_token.take()),
+    ));
     let (mut incoming_messages, client) =
         TwitchIRCClient::<SecureTCPTransport, StaticLoginCredentials>::new(config);
 
+    let client_clone = client.clone();
     // first thing you should do: start consuming incoming messages,
     // otherwise they will back up.
     let join_handle = tokio::spawn(async move {
