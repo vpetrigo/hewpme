@@ -6,18 +6,18 @@ use std::fmt::Formatter;
 
 use tokio_tungstenite::tungstenite;
 use tracing::Instrument;
+use twitch_api::{
+    eventsub::{
+        self,
+        Event,
+        event::websocket::{EventsubWebsocketData, ReconnectPayload, SessionData, WelcomePayload}, Payload,
+    },
+    HelixClient,
+};
 use twitch_api::eventsub::channel::{
     ChannelFollowV2, ChannelFollowV2Payload, ChannelSubscribeV1, ChannelSubscribeV1Payload,
 };
 use twitch_api::types::UserId;
-use twitch_api::{
-    eventsub::{
-        self,
-        event::websocket::{EventsubWebsocketData, ReconnectPayload, SessionData, WelcomePayload},
-        Event, Payload,
-    },
-    HelixClient,
-};
 use twitch_oauth2::{TwitchToken, UserToken};
 use url::Url;
 
