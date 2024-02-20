@@ -1,3 +1,6 @@
+/// Requires the following permissions:
+/// - channel:read:subscriptions
+/// - moderator:read:followers
 use std::error::Error;
 use std::fmt::Formatter;
 
@@ -55,7 +58,7 @@ impl<T: Error> From<T> for WSError {
 }
 
 pub type WebSocketStream =
-    tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>;
+tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>;
 
 impl WebsocketClient {
     pub fn new(
@@ -99,8 +102,8 @@ impl WebsocketClient {
                 let span = tracing::info_span!("message received: ", raw_message = ?msg);
                 let msg = match msg {
                     Err(tungstenite::Error::Protocol(
-                        tungstenite::error::ProtocolError::ResetWithoutClosingHandshake,
-                    )) => {
+                            tungstenite::error::ProtocolError::ResetWithoutClosingHandshake,
+                        )) => {
                         tracing::warn!(
                             "connection was sent an unexpected frame or was reset, reestablishing it"
                         );
@@ -171,6 +174,7 @@ impl WebsocketClient {
                 }
             }
             tungstenite::Message::Close(_) => todo!(),
+            tungstenite::Message::Ping(_) => Ok(()),
             _ => {
                 tracing::warn!("Unhandled case");
                 Ok(())
@@ -197,17 +201,23 @@ impl WebsocketClient {
 
     async fn make_eventsub_subscriptions(&mut self, data: &SessionData<'_>) -> Result<(), WSError> {
         let transport = eventsub::Transport::websocket(data.id.clone());
-        println!("Token: {:?}", &self.token);
+
+        println!(
+            "Broadcaster: {}, moderator: {}",
+            self.user_id.as_str(),
+            self.token.user_id.as_str()
+        );
+
         self.client
             .create_eventsub_subscription(
-                ChannelFollowV2::new(self.token.user_id.clone(), self.token.user_id.clone()),
+                ChannelFollowV2::new(self.user_id.clone(), self.token.user_id.clone()),
                 transport.clone(),
                 &self.token,
             )
             .await?;
         self.client
             .create_eventsub_subscription(
-                ChannelSubscribeV1::broadcaster_user_id(self.token.user_id.clone()),
+                ChannelSubscribeV1::broadcaster_user_id(self.user_id.clone()),
                 transport.clone(),
                 &self.token,
             )
@@ -249,14 +259,22 @@ impl WebsocketClient {
     }
 
     async fn put_follower_name(&self, payload: &ChannelFollowV2Payload) {
-        self.events_list
-            .add_follower(format!("{}{}", payload.user_name, payload.user_id))
-            .await;
+        let follower = if cfg!(feature = "debug") {
+            format!("{}{}", payload.user_name, payload.user_id)
+        } else {
+            format!("{}", payload.user_name)
+        };
+
+        self.events_list.add_follower(follower).await;
     }
 
     async fn put_subscriber_name(&self, payload: &ChannelSubscribeV1Payload) {
-        self.events_list
-            .add_subscriber(format!("{}{}", payload.user_name, payload.user_id))
-            .await;
+        let subscriber = if cfg!(feature = "debug") {
+            format!("{}{}", payload.user_name, payload.user_id)
+        } else {
+            format!("{}", payload.user_name)
+        };
+
+        self.events_list.add_subscriber(subscriber).await;
     }
 }

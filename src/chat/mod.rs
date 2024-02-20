@@ -1,3 +1,6 @@
+/// Requires the following permissions:
+/// - channel:read:subscriptions
+/// - moderator:read:followers
 use std::env;
 
 use twitch_irc::login::StaticLoginCredentials;
