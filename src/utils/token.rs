@@ -52,6 +52,14 @@ impl core::fmt::Display for Error {
 
 const APP_NAME: &str = "hewpme";
 const CONFIG_FILE_NAME: &str = "config.json";
+const SCOPES: &[twitch_oauth2::scopes::Scope] = &[
+    twitch_oauth2::scopes::Scope::ChannelBot,
+    twitch_oauth2::scopes::Scope::ChannelModerate,
+    twitch_oauth2::scopes::Scope::ChatRead,
+    twitch_oauth2::scopes::Scope::ChatEdit,
+    twitch_oauth2::scopes::Scope::ChannelReadSubscriptions,
+    twitch_oauth2::scopes::Scope::ModeratorReadFollowers,
+];
 
 static TOKEN_STORAGE: OnceCell<RwLock<UserToken>> = OnceCell::const_new();
 
@@ -62,10 +70,11 @@ pub async fn get_user_token() -> UserToken {
                 .unwrap()
                 .config_dir()
                 .join(APP_NAME);
+            let bot_config_file = bot_config_dir.join(CONFIG_FILE_NAME);
 
-            if bot_config_dir.exists() {
+            if bot_config_dir.exists() && bot_config_file.exists() && bot_config_file.is_file() {
                 // load token from the file
-                return RwLock::new(restore_token_from_file(bot_config_dir).await);
+                return RwLock::new(restore_token_from_file(bot_config_file).await);
             }
 
             RwLock::new(request_user_authentication().await)
@@ -80,10 +89,9 @@ pub fn _update_user_token(_token: &str) {
     todo!()
 }
 
-fn get_token_from_file(config_dir: PathBuf) -> Token {
-    let config_file = config_dir.join(CONFIG_FILE_NAME);
+fn get_token_from_file(config_file: PathBuf) -> Token {
     // TODO: add handling of existing configuration directory, but file is missed
-    let file = match fs::File::open(&config_file) {
+    let file = match fs::File::open(config_file) {
         Err(e) => panic!("Unable to open file: {e}"),
         Ok(file) => file,
     };
@@ -102,10 +110,7 @@ fn create_token_context() -> UserTokenBuilder {
     let client_secret = env::var("TWITCH_CLIENT_SECRET").unwrap();
     let mut builder = UserTokenBuilder::new(client_id, client_secret, redirect_url);
 
-    builder = builder.set_scopes(vec![
-        twitch_oauth2::scopes::Scope::ChannelReadSubscriptions,
-        twitch_oauth2::scopes::Scope::ModeratorReadFollowers,
-    ]);
+    builder = builder.set_scopes(SCOPES.to_vec());
     builder = builder.force_verify(true); // Defaults to false
 
     builder
@@ -153,9 +158,9 @@ fn extract_url(query: &HashMap<String, String>) -> Result<(String, String), ()> 
     }
 }
 
-async fn restore_token_from_file(config_dir: PathBuf) -> UserToken {
+async fn restore_token_from_file(config_file: PathBuf) -> UserToken {
     let client_secret = env::var("TWITCH_CLIENT_SECRET").unwrap();
-    let token = get_token_from_file(config_dir);
+    let token = get_token_from_file(config_file);
     let client = ClientBuilder::new()
         .redirect(reqwest::redirect::Policy::none())
         .build()
@@ -166,12 +171,12 @@ async fn restore_token_from_file(config_dir: PathBuf) -> UserToken {
         token.refresh_token,
         ClientSecret::from(client_secret),
     )
-    .await;
+        .await;
 
-    return match token {
+    match token {
         Err(e) => panic!("Unable to get token: {e}"),
         Ok(token) => token,
-    };
+    }
 }
 
 async fn request_user_authentication() -> UserToken {
