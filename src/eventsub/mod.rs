@@ -7,7 +7,7 @@ use twitch_oauth2::{Scope, UserToken};
 use url::Url;
 
 use crate::helper::SafeTwitchEventList;
-use crate::utils::{Token, TokenCreateContext, TokenWrapper};
+use crate::utils::{CreateContext, Token, Wrapper};
 use crate::{config, websocket};
 
 const TEST_WEBSOCKET_URL: &str = "ws://127.0.0.1:8080/ws";
@@ -22,8 +22,8 @@ pub(crate) async fn run_eventsub_client(event_list: SafeTwitchEventList) {
                 Scope::ModeratorManageBannedUsers,
                 Scope::ChannelReadSubscriptions,
             ];
-            let token_create_ctx = TokenCreateContext::new(&scopes, false, config::REDIRECT_URL);
-            let token_handler = TokenWrapper::new(token_create_ctx).await;
+            let token_create_ctx = CreateContext::new(&scopes, false, config::REDIRECT_URL);
+            let token_handler = Wrapper::new(token_create_ctx).await;
 
             token_handler.get_user_token().into()
         }
@@ -49,8 +49,7 @@ pub(crate) async fn run_eventsub_client(event_list: SafeTwitchEventList) {
         get_user_id(&client, &token, &channel_name).await
     };
 
-    let ws =
-        websocket::WebsocketClient::new(None, token, client, user_id, connection_url, event_list);
+    let ws = websocket::WSlient::new(None, token, client, user_id, connection_url, event_list);
 
     ws.run()
         .await

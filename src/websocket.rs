@@ -23,7 +23,7 @@ use url::Url;
 
 use crate::helper::SafeTwitchEventList;
 
-pub struct WebsocketClient {
+pub struct WSlient {
     /// The session id of the websocket connection
     pub session_id: Option<String>,
     /// The token used to authenticate with the Twitch API
@@ -60,7 +60,7 @@ impl<T: Error> From<T> for WSError {
 pub type WebSocketStream =
 tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>;
 
-impl WebsocketClient {
+impl WSlient {
     pub fn new(
         session_id: Option<String>,
         token: UserToken,
@@ -69,7 +69,7 @@ impl WebsocketClient {
         connect_url: Url,
         events_list: SafeTwitchEventList,
     ) -> Self {
-        WebsocketClient {
+        WSlient {
             session_id,
             token,
             client,
@@ -116,7 +116,7 @@ impl WebsocketClient {
                 let result = self.process_message(msg).instrument(span).await;
 
                 if let Err(err) = result {
-                    println!("Error: {:?}", err);
+                    println!("Error: {err:?}");
                     return Err(err);
                 }
             }
@@ -165,11 +165,6 @@ impl WebsocketClient {
                         tracing::info!("got revocation event: {metadata:?}");
                         Ok(())
                     }
-                    // eyre::bail!("got revocation event: {metadata:?}"),
-                    EventsubWebsocketData::Keepalive {
-                        metadata: _,
-                        payload: _,
-                    } => Ok(()),
                     _ => Ok(()),
                 }
             }
@@ -230,7 +225,7 @@ impl WebsocketClient {
         match event {
             Event::ChannelFollowV2(payload) => self.handle_channel_follow_event(payload).await,
             Event::ChannelSubscribeV1(payload) => {
-                self.handle_channel_subscribe_event(payload).await
+                self.handle_channel_subscribe_event(payload).await;
             }
             _ => (),
         }

@@ -11,12 +11,12 @@ use crate::helper::{ChattersList, SafeTwitchEventList};
 
 #[derive(Serialize, Debug)]
 struct Content<T>
-where
-    T: IntoIterator,
+    where
+        T: IntoIterator,
 {
-    chatters_list: Option<T>,
-    followers_list: Option<T>,
-    subscribers_list: Option<T>,
+    chatters: Option<T>,
+    followers: Option<T>,
+    subscribers: Option<T>,
 }
 
 #[derive(Debug)]
@@ -100,7 +100,7 @@ pub(crate) fn run_server(chatters_list: ChattersList, event_list: SafeTwitchEven
 fn generate_credits_text<T: IntoIterator + Serialize>(ctx: TemplateContext<T>) -> Result<String> {
     let template = read_index_template()?;
 
-    add_chatters_to_index_page(ctx, template)
+    add_chatters_to_index_page(ctx, template.as_str())
 }
 
 fn read_index_template() -> Result<String> {
@@ -115,16 +115,16 @@ fn read_index_template() -> Result<String> {
 
 fn add_chatters_to_index_page<T: IntoIterator + Serialize>(
     ctx: TemplateContext<T>,
-    index_template: String,
+    index_template: &str,
 ) -> Result<String> {
     let mut tt = TinyTemplate::new();
     let context = Content {
-        chatters_list: ctx.chatters,
-        followers_list: ctx.followers,
-        subscribers_list: ctx.subscribers,
+        chatters: ctx.chatters,
+        followers: ctx.followers,
+        subscribers: ctx.subscribers,
     };
 
-    tt.add_template("index", index_template.as_str())?;
+    tt.add_template("index", index_template)?;
     tt.add_formatter("followers", chatter_name_formatter);
     tt.add_formatter("subscribers", chatter_name_formatter);
     tt.add_formatter("chatters", chatter_name_formatter);

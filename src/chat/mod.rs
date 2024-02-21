@@ -11,7 +11,7 @@ use twitch_oauth2::Scope;
 
 use crate::config;
 use crate::helper::ChattersList;
-use crate::utils::{Token, TokenCreateContext, TokenWrapper};
+use crate::utils::{CreateContext, Token, Wrapper};
 
 #[derive(Debug)]
 struct ChatTokenStorage;
@@ -26,9 +26,8 @@ impl TokenStorage for ChatTokenStorage {
         let token = match Token::from_file(chat_config.clone()) {
             Err(_) => {
                 let scopes = [Scope::ChatRead, Scope::ChatEdit];
-                let token_create_ctx =
-                    TokenCreateContext::new(&scopes, false, config::REDIRECT_URL);
-                let token_handler = TokenWrapper::new(token_create_ctx).await;
+                let token_create_ctx = CreateContext::new(&scopes, false, config::REDIRECT_URL);
+                let token_handler = Wrapper::new(token_create_ctx).await;
 
                 token_handler.get_user_token().into()
             }
@@ -78,14 +77,13 @@ pub async fn run_twitch_irc_client(chatters_list: ChattersList) {
                     .await
                     .insert(user_msg.sender.name.clone());
 
-                match user_msg
-                    .message_text
-                    .split(' ')
-                    .map(|s| s)
-                    .collect::<Vec<_>>()[..]
-                {
-                    ["#game", ..] => responder
+                match user_msg.message_text.split(' ').collect::<Vec<_>>()[..] {
+                    ["#game" | "!game", ..] => responder
                         .say_in_reply_to(user_msg, "Вся наша жизнь - игра!".to_string())
+                        .await
+                        .unwrap(),
+                    ["!ban", ..] => responder
+                        .say_in_reply_to(user_msg, "Сейчас выдам бан!".to_string())
                         .await
                         .unwrap(),
                     _ => (),

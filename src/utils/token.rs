@@ -1,14 +1,13 @@
 use core::time::Duration;
 use std::collections::HashMap;
 use std::fmt::Formatter;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::{env, fs, io};
 
 use chrono::{DateTime, Utc};
 use reqwest::{ClientBuilder, IntoUrl};
 use serde::{Deserialize, Serialize};
 use tokio::runtime::Handle;
-use tokio::sync::{OnceCell, RwLock};
 use twitch_irc::login::UserAccessToken;
 use twitch_oauth2::{
     AccessToken, ClientSecret, CsrfToken, RefreshToken, Scope, TwitchToken, UserToken,
@@ -16,16 +15,15 @@ use twitch_oauth2::{
 };
 use url::Url;
 
-use crate::config::{get_app_directory_path, get_eventsub_config_file};
 use crate::utils::{create_auth_channel, run_auth_server};
 
-pub struct TokenWrapper {
+pub struct Wrapper {
     token: UserToken,
 }
 
-impl TokenWrapper {
-    pub async fn new<T: IntoUrl>(ctx: TokenCreateContext<'_, T>) -> Self {
-        TokenWrapper {
+impl Wrapper {
+    pub async fn new<T: IntoUrl>(ctx: CreateContext<'_, T>) -> Self {
+        Wrapper {
             token: request_user_token(ctx).await,
         }
     }
@@ -37,7 +35,9 @@ impl TokenWrapper {
 
 #[derive(Serialize, Deserialize)]
 pub struct Token {
+    #[allow(clippy::struct_field_names)]
     pub access_token: AccessToken,
+    #[allow(clippy::struct_field_names)]
     pub refresh_token: Option<RefreshToken>,
     pub created_at: DateTime<Utc>,
     pub valid_till: DateTime<Utc>,
@@ -87,15 +87,15 @@ impl From<&UserAccessToken> for Token {
     }
 }
 
-pub struct TokenCreateContext<'a, T: IntoUrl> {
+pub struct CreateContext<'a, T: IntoUrl> {
     pub scopes: &'a [Scope],
     pub force_verify: bool,
     pub redirect_url: T,
 }
 
-impl<'a, T: IntoUrl> TokenCreateContext<'a, T> {
+impl<'a, T: IntoUrl> CreateContext<'a, T> {
     pub fn new(scopes: &'a [Scope], force_verify: bool, redirect_url: T) -> Self {
-        TokenCreateContext {
+        CreateContext {
             scopes,
             force_verify,
             redirect_url,
@@ -132,7 +132,7 @@ impl Token {
     }
 
     pub fn from_file(file: PathBuf) -> io::Result<Self> {
-        Ok(get_token_from_file(file)?)
+        get_token_from_file(file)
     }
 
     pub async fn into_user_token(self) -> UserToken {
@@ -156,19 +156,6 @@ impl Token {
     }
 }
 
-const SCOPES: &[Scope] = &[
-    Scope::ChannelBot,
-    Scope::ChannelModerate,
-    Scope::ChatRead,
-    Scope::ChatEdit,
-    Scope::ChannelReadSubscriptions,
-    Scope::ModeratorReadFollowers,
-];
-
-pub fn _update_user_token(_token: &str) {
-    todo!()
-}
-
 fn get_token_from_file(config_file: PathBuf) -> io::Result<Token> {
     // TODO: add handling of existing configuration directory, but file is missed
     let file = fs::File::open(config_file)?;
@@ -177,7 +164,7 @@ fn get_token_from_file(config_file: PathBuf) -> io::Result<Token> {
     Ok(serde_json::from_reader(reader)?)
 }
 
-fn create_token_context<T: IntoUrl>(ctx: TokenCreateContext<'_, T>) -> UserTokenBuilder {
+fn create_token_context<T: IntoUrl>(ctx: CreateContext<'_, T>) -> UserTokenBuilder {
     let redirect_url = ctx.redirect_url.into_url().expect("Invalid redirect URL");
     let client_id = env::var("TWITCH_CLIENT_ID").unwrap();
     let client_secret = env::var("TWITCH_CLIENT_SECRET").unwrap();
@@ -200,7 +187,7 @@ fn verify_csrf_token(
     let resp_csrf_token = response.get("state");
 
     if let Some(csrf) = resp_csrf_token {
-        return if builder.csrf_is_valid(resp_csrf_token.unwrap()) {
+        return if builder.csrf_is_valid(csrf) {
             Ok(())
         } else {
             Err(Error::CsrfTokenMismatch)
@@ -215,8 +202,8 @@ fn extract_pair<'a>(
     key1: &str,
     key2: &str,
 ) -> (Option<&'a String>, Option<&'a String>) {
-    let value1 = query.get(key1).to_owned();
-    let value2 = query.get(key2).to_owned();
+    let value1 = query.get(key1);
+    let value2 = query.get(key2);
 
     (value1, value2)
 }
@@ -234,7 +221,7 @@ fn extract_url(query: &HashMap<String, String>) -> Result<(String, String), ()> 
     }
 }
 
-async fn request_user_token<T: IntoUrl>(ctx: TokenCreateContext<'_, T>) -> UserToken {
+async fn request_user_token<T: IntoUrl>(ctx: CreateContext<'_, T>) -> UserToken {
     // no token - retrieve it from Twitch API
     // 1. run auth server
     // 2. generate token URL
@@ -249,7 +236,7 @@ async fn request_user_token<T: IntoUrl>(ctx: TokenCreateContext<'_, T>) -> UserT
     let mut token_context = create_token_context(ctx);
     let (url, csrf_token) = generate_token_url(&mut token_context);
     // Make your user navigate to this URL, for example
-    println!("Visit this URL to authorize Twitch access: {}", url);
+    println!("Visit this URL to authorize Twitch access: {url}");
     let auth_response = rx
         .recv()
         .await
@@ -270,14 +257,11 @@ async fn request_user_token<T: IntoUrl>(ctx: TokenCreateContext<'_, T>) -> UserT
                 .redirect(reqwest::redirect::Policy::none())
                 .build()
                 .expect("Unable to build a client to send request to Twitch API");
-            let token = token_context
+
+            token_context
                 .get_user_token(&client, state, code)
                 .await
-                .expect("Failed to get user token from Twitch");
-            // println!("{token:?}");
-            // save_token_data(&token);
-
-            token
+                .expect("Failed to get user token from Twitch")
         }
         _ => todo!(),
     }
