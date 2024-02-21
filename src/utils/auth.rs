@@ -48,12 +48,12 @@ async fn auth_response_handler(
     ))
 }
 
-fn with_sender(sender: Sender) -> impl Filter<Extract=(Sender, ), Error=Infallible> + Clone {
+fn with_sender(sender: Sender) -> impl Filter<Extract = (Sender,), Error = Infallible> + Clone {
     warp::any().map(move || sender.clone())
 }
 
 fn with_stop_channel(
     cancellation_token: CancellationToken,
-) -> impl Filter<Extract=(CancellationToken, ), Error=Infallible> + Clone {
+) -> impl Filter<Extract = (CancellationToken,), Error = Infallible> + Clone {
     warp::any().map(move || cancellation_token.clone())
 }
