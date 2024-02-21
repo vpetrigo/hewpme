@@ -3,10 +3,10 @@ use std::thread;
 use helper::create_new_chatters_list;
 
 use crate::chat::run_twitch_irc_client;
-use crate::eventsub::run_eventsub_client;
 use crate::helper::create_new_twitch_event_list;
 
 mod chat;
+pub mod config;
 mod eventsub;
 mod helper;
 mod server;
@@ -27,7 +27,7 @@ fn main() {
     // TODO: switch from rouille to warp
     let webserver_handle = thread::spawn(move || server::run_server(chatters_list, events_list));
     let eventsub_client_handler = rt.spawn(async move {
-        run_eventsub_client(events_list2).await;
+        // run_eventsub_client(events_list2).await;
     });
     let twitch_client_handler = rt.spawn(async move {
         run_twitch_irc_client(client_list).await;
