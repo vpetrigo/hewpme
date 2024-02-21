@@ -4,9 +4,7 @@
 use std::{env, io};
 
 use async_trait::async_trait;
-use twitch_irc::login::{
-    RefreshingLoginCredentials, StaticLoginCredentials, TokenStorage, UserAccessToken,
-};
+use twitch_irc::login::{RefreshingLoginCredentials, TokenStorage, UserAccessToken};
 use twitch_irc::message::ServerMessage::Privmsg;
 use twitch_irc::{ClientConfig, SecureTCPTransport, TwitchIRCClient};
 use twitch_oauth2::Scope;
@@ -79,11 +77,19 @@ pub async fn run_twitch_irc_client(chatters_list: ChattersList) {
                     .lock()
                     .await
                     .insert(user_msg.sender.name.clone());
-                // TODO: Add some funny commands handling
-                responder
-                    .say_in_reply_to(user_msg, "Hello".into())
-                    .await
-                    .unwrap();
+
+                match user_msg
+                    .message_text
+                    .split(' ')
+                    .map(|s| s)
+                    .collect::<Vec<_>>()[..]
+                {
+                    ["#game", ..] => responder
+                        .say_in_reply_to(user_msg, "Вся наша жизнь - игра!".to_string())
+                        .await
+                        .unwrap(),
+                    _ => (),
+                }
             }
 
             tracing::trace!("Received message: {:?}", message);
