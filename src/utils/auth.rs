@@ -6,21 +6,11 @@ use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 use warp::{serve, Filter, Reply};
 
-pub type Sender = mpsc::Sender<HashMap<String, String>>;
-pub type Receiver = mpsc::Receiver<HashMap<String, String>>;
+type Sender = mpsc::Sender<HashMap<String, String>>;
+type Receiver = mpsc::Receiver<HashMap<String, String>>;
 
 pub fn create_auth_channel() -> (Sender, Receiver) {
     mpsc::channel(1)
-}
-
-fn with_sender(sender: Sender) -> impl Filter<Extract = (Sender,), Error = Infallible> + Clone {
-    warp::any().map(move || sender.clone())
-}
-
-fn with_stop_channel(
-    cancellation_token: CancellationToken,
-) -> impl Filter<Extract = (CancellationToken,), Error = Infallible> + Clone {
-    warp::any().map(move || cancellation_token.clone())
 }
 
 pub async fn run_auth_server(tx: Sender) {
@@ -56,4 +46,14 @@ async fn auth_response_handler(
         "Success".to_string(),
         warp::http::StatusCode::OK,
     ))
+}
+
+fn with_sender(sender: Sender) -> impl Filter<Extract=(Sender, ), Error=Infallible> + Clone {
+    warp::any().map(move || sender.clone())
+}
+
+fn with_stop_channel(
+    cancellation_token: CancellationToken,
+) -> impl Filter<Extract=(CancellationToken, ), Error=Infallible> + Clone {
+    warp::any().map(move || cancellation_token.clone())
 }
