@@ -69,3 +69,26 @@ async fn get_user_id<'a, C: 'a>(
         Err(e) => panic!("Unable to get User ID from Twitch: {e}"),
     }
 }
+
+pub async fn ban_user(user_id: &str, reason: &str) {
+    let client = HelixClient::<reqwest::Client>::new();
+    let config_file = config::get_eventsub_config_file();
+    let token = Token::from_file(config_file.clone()).expect("Unable to get token from file");
+    let duration_sec = 30;
+    let token = token.into_user_token().await;
+
+    match client
+        .ban_user(
+            user_id,
+            reason,
+            duration_sec,
+            token.user_id.clone(),
+            token.user_id.clone(),
+            &token,
+        )
+        .await
+    {
+        Err(_) => tracing::warn!("Unable to ban user {user_id}"),
+        _ => (),
+    }
+}

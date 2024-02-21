@@ -12,15 +12,15 @@
         <h1>Cпасибо за компанию!</h1>
         {{ if subscribers_list }}
         <p class="list_title">Новые подписчики</p>
-        <p>{{ for value in subscribers_list }}{ value | subscribers }{{ endfor }}</p>
+        <p>{{ for value in subscribers }}{ value | subscribers }{{ endfor }}</p>
         {{ endif }}
         {{ if followers_list }}
         <p class="list_title">Новые фолловеры</p>
-        <p>{{ for value in followers_list }}{ value | followers }{{ endfor }}</p>
+        <p>{{ for value in followers }}{ value | followers }{{ endfor }}</p>
         {{ endif }}
         {{ if chatters_list }}
         <p class="list_title">Активные чатерсы</p>
-        <p>{{ for value in chatters_list }}{ value | chatters }{{ endfor }}</p>
+        <p>{{ for value in chatters }}{ value | chatters }{{ endfor }}</p>
         {{ endif }}
     </div>
 </div>

@@ -619,6 +619,7 @@ dependencies = [
  "chrono",
  "directories",
  "futures",
+ "rand",
  "reqwest",
  "rouille",
  "serde",

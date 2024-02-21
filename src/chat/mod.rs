@@ -78,10 +78,20 @@ pub async fn run_twitch_irc_client(chatters_list: ChattersList) {
                     .insert(user_msg.sender.name.clone());
 
                 match user_msg.message_text.split(' ').collect::<Vec<_>>()[..] {
-                    ["#game" | "!game", ..] => responder
-                        .say_in_reply_to(user_msg, "Вся наша жизнь - игра!".to_string())
-                        .await
-                        .unwrap(),
+                    ["!game", ..] => {
+                        let coin_flip = rand::random::<bool>();
+
+                        if coin_flip {
+                            // ban user
+                            crate::eventsub::ban_user(user_msg.sender.id.as_str(), "Ты проиграл!")
+                                .await;
+                        } else {
+                            responder
+                                .say_in_reply_to(user_msg, "В этот раз тебе повезло!".to_string())
+                                .await
+                                .unwrap()
+                        }
+                    }
                     ["!ban", ..] => responder
                         .say_in_reply_to(user_msg, "Сейчас выдам бан!".to_string())
                         .await

@@ -12,7 +12,7 @@ use crate::helper::{ChattersList, SafeTwitchEventList};
 #[derive(Serialize, Debug)]
 struct Content<T>
     where
-        T: IntoIterator,
+        T: IntoIterator + core::fmt::Debug,
 {
     chatters: Option<T>,
     followers: Option<T>,
@@ -86,8 +86,9 @@ pub(crate) fn run_server(chatters_list: ChattersList, event_list: SafeTwitchEven
 
         rouille::router!(request,
             (GET) (/) => {
-                if let Ok(page) = generate_credit_page(&chatters_list, &event_list) {
-                    return rouille::Response::html(page)
+                match generate_credit_page(&chatters_list, &event_list) {
+                    Ok(page) => return rouille::Response::html(page),
+                    Err(e) => eprintln!("{e}"),
                 }
 
                 rouille::Response::empty_404()
@@ -97,10 +98,13 @@ pub(crate) fn run_server(chatters_list: ChattersList, event_list: SafeTwitchEven
     });
 }
 
-fn generate_credits_text<T: IntoIterator + Serialize>(ctx: TemplateContext<T>) -> Result<String> {
+fn generate_credits_text<T: IntoIterator + Serialize + core::fmt::Debug>(
+    ctx: TemplateContext<T>,
+) -> Result<String> {
     let template = read_index_template()?;
 
-    add_chatters_to_index_page(ctx, template.as_str())
+    println!("{template}");
+    add_chatters_to_index_page(ctx, template)
 }
 
 fn read_index_template() -> Result<String> {
@@ -113,9 +117,9 @@ fn read_index_template() -> Result<String> {
     Ok(buffer)
 }
 
-fn add_chatters_to_index_page<T: IntoIterator + Serialize>(
+fn add_chatters_to_index_page<T: IntoIterator + Serialize + core::fmt::Debug>(
     ctx: TemplateContext<T>,
-    index_template: &str,
+    index_template: String,
 ) -> Result<String> {
     let mut tt = TinyTemplate::new();
     let context = Content {
@@ -124,7 +128,8 @@ fn add_chatters_to_index_page<T: IntoIterator + Serialize>(
         subscribers: ctx.subscribers,
     };
 
-    tt.add_template("index", index_template)?;
+    println!("{context:?}");
+    tt.add_template("index", index_template.as_str())?;
     tt.add_formatter("followers", chatter_name_formatter);
     tt.add_formatter("subscribers", chatter_name_formatter);
     tt.add_formatter("chatters", chatter_name_formatter);
