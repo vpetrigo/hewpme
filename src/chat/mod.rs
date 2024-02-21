@@ -13,7 +13,7 @@ use twitch_oauth2::Scope;
 
 use crate::config;
 use crate::helper::ChattersList;
-use crate::utils::{Token, TokenCreateContext, TokenHandler};
+use crate::utils::{Token, TokenCreateContext, TokenWrapper};
 
 #[derive(Debug)]
 struct ChatTokenStorage;
@@ -30,7 +30,7 @@ impl TokenStorage for ChatTokenStorage {
                 let scopes = [Scope::ChatRead, Scope::ChatEdit];
                 let token_create_ctx =
                     TokenCreateContext::new(&scopes, false, config::REDIRECT_URL);
-                let token_handler = TokenHandler::new(token_create_ctx).await;
+                let token_handler = TokenWrapper::new(token_create_ctx).await;
 
                 token_handler.get_user_token().into()
             }
