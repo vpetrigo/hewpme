@@ -58,7 +58,7 @@ impl<T: Error> From<T> for WSError {
 }
 
 pub type WebSocketStream =
-tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>;
+    tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>;
 
 impl WSlient {
     pub fn new(
@@ -102,8 +102,8 @@ impl WSlient {
                 let span = tracing::info_span!("message received: ", raw_message = ?msg);
                 let msg = match msg {
                     Err(tungstenite::Error::Protocol(
-                            tungstenite::error::ProtocolError::ResetWithoutClosingHandshake,
-                        )) => {
+                        tungstenite::error::ProtocolError::ResetWithoutClosingHandshake,
+                    )) => {
                         tracing::warn!(
                             "connection was sent an unexpected frame or was reset, reestablishing it"
                         );

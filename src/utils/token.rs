@@ -147,7 +147,7 @@ impl Token {
             self.refresh_token,
             ClientSecret::from(client_secret),
         )
-            .await;
+        .await;
 
         match token {
             Err(e) => panic!("Unable to get token: {e}"),

@@ -61,8 +61,8 @@ async fn get_user_id<'a, C: 'a>(
     token: &UserToken,
     user_name: &str,
 ) -> UserId
-    where
-        C: twitch_api::HttpClient,
+where
+    C: twitch_api::HttpClient,
 {
     match client.get_user_from_login(user_name, token).await {
         Ok(user_id) => user_id.unwrap().id,
@@ -70,6 +70,7 @@ async fn get_user_id<'a, C: 'a>(
     }
 }
 
+// TODO: Add token passing
 pub async fn ban_user(user_id: &str, reason: &str) {
     let client = HelixClient::<reqwest::Client>::new();
     let config_file = config::get_eventsub_config_file();

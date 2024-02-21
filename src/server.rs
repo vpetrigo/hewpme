@@ -11,8 +11,8 @@ use crate::helper::{ChattersList, SafeTwitchEventList};
 
 #[derive(Serialize, Debug)]
 struct Content<T>
-    where
-        T: IntoIterator,
+where
+    T: IntoIterator,
 {
     chatters: Option<T>,
     followers: Option<T>,
