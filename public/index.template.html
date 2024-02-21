@@ -10,15 +10,15 @@
 <div id="content">
     <div id="container">
         <h1>Cпасибо за компанию!</h1>
-        {{ if subscribers_list }}
+        {{ if subscribers }}
         <p class="list_title">Новые подписчики</p>
         <p>{{ for value in subscribers }}{ value | subscribers }{{ endfor }}</p>
         {{ endif }}
-        {{ if followers_list }}
+        {{ if followers }}
         <p class="list_title">Новые фолловеры</p>
         <p>{{ for value in followers }}{ value | followers }{{ endfor }}</p>
         {{ endif }}
-        {{ if chatters_list }}
+        {{ if chatters }}
         <p class="list_title">Активные чатерсы</p>
         <p>{{ for value in chatters }}{ value | chatters }{{ endfor }}</p>
         {{ endif }}

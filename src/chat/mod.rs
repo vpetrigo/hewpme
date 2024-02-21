@@ -89,7 +89,7 @@ pub async fn run_twitch_irc_client(chatters_list: ChattersList) {
                             responder
                                 .say_in_reply_to(user_msg, "В этот раз тебе повезло!".to_string())
                                 .await
-                                .unwrap()
+                                .unwrap();
                         }
                     }
                     ["!ban", ..] => responder

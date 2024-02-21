@@ -77,7 +77,7 @@ pub async fn ban_user(user_id: &str, reason: &str) {
     let duration_sec = 30;
     let token = token.into_user_token().await;
 
-    match client
+    if let Err(e) = client
         .ban_user(
             user_id,
             reason,
@@ -88,7 +88,6 @@ pub async fn ban_user(user_id: &str, reason: &str) {
         )
         .await
     {
-        Err(_) => tracing::warn!("Unable to ban user {user_id}"),
-        _ => (),
+        tracing::warn!("Unable to ban user {user_id}: {e}");
     }
 }
