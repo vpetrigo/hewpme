@@ -213,7 +213,6 @@ async fn from_existing<C: Client>(
 }
 
 fn get_token_from_file(config_file: PathBuf) -> io::Result<Token> {
-    // TODO: add handling of existing configuration directory, but file is missed
     let file = fs::File::open(config_file)?;
     let reader = io::BufReader::new(file);
 
