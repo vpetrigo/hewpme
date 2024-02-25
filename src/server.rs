@@ -80,10 +80,6 @@ impl From<tinytemplate::error::Error> for ServerError {
     }
 }
 
-// Ok(generate_credit_page(&chatters_list, &event_list)
-//     .await
-//     .unwrap_or("Fail".to_string()))
-
 pub(crate) async fn run_server(chatters_list: ChattersList, event_list: SafeTwitchEventList) {
     let static_files = warp::path("static").and(warp::fs::dir("public"));
     let credits = warp::path::end()
