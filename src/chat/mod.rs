@@ -28,13 +28,13 @@ impl TokenStorage for ChatTokenStorage {
                 let scopes = [Scope::ChatRead, Scope::ChatEdit];
                 let token_create_ctx = CreateContext::new(&scopes, false, config::REDIRECT_URL);
                 let token_handler = Wrapper::new(token_create_ctx).await;
+                let token: Token = token_handler.get_user_token().into();
+                token.save(chat_config)?;
 
-                token_handler.get_user_token().into()
+                token
             }
             Ok(token) => token,
         };
-
-        token.save(chat_config)?;
 
         Ok(UserAccessToken {
             access_token: token.access_token.clone().take(),
@@ -51,10 +51,7 @@ impl TokenStorage for ChatTokenStorage {
 }
 
 pub async fn run_twitch_irc_client(chatters_list: ChattersList) {
-    // default configuration is to join chat as anonymous.
-
     let storage = ChatTokenStorage {};
-
     let credentials = RefreshingLoginCredentials::init(
         config::get_client_id(),
         config::get_client_secret(),
