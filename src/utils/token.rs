@@ -146,7 +146,7 @@ impl Token {
             .expect("Unable to build a client to send request to Twitch API");
         let is_expired = self.valid_till < chrono::Utc::now();
 
-        let token = if is_expired {
+        if is_expired {
             let user_token = refresh_expired(&self, &client).await;
             let token: Token = user_token.clone().into();
 
@@ -163,9 +163,7 @@ impl Token {
                 client_secret.as_str(),
             )
             .await
-        };
-
-        token
+        }
     }
 }
 
