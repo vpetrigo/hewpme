@@ -1,5 +1,3 @@
-use std::thread;
-
 use helper::create_new_chatters_list;
 
 use crate::chat::run_twitch_irc_client;
@@ -25,8 +23,9 @@ fn main() {
         .unwrap();
     tracing_subscriber::fmt::init();
 
-    // TODO: switch from rouille to warp
-    let webserver_handle = thread::spawn(move || server::run_server(chatters_list, events_list));
+    let webserver_handle = rt.spawn(async move {
+        server::run_server(chatters_list, events_list).await;
+    });
     let eventsub_client_handler = rt.spawn(async move {
         run_eventsub_client(events_list2).await;
     });
@@ -34,10 +33,11 @@ fn main() {
         run_twitch_irc_client(client_list).await;
     });
 
-    for handle in [eventsub_client_handler, twitch_client_handler] {
+    for handle in [
+        eventsub_client_handler,
+        twitch_client_handler,
+        webserver_handle,
+    ] {
         rt.block_on(handle).unwrap();
     }
-    webserver_handle
-        .join()
-        .expect("Unable to wait for the thread");
 }

@@ -1,11 +1,15 @@
+use std::convert::Infallible;
 use std::fmt::{Formatter, Write};
 use std::fs;
 use std::io::Read;
+use std::net::SocketAddr;
 use std::path::Path;
 
 use serde::Serialize;
 use serde_json::Value;
 use tinytemplate::TinyTemplate;
+use warp::hyper::Body;
+use warp::{Filter, Reply};
 
 use crate::helper::{ChattersList, SafeTwitchEventList};
 
@@ -76,26 +80,32 @@ impl From<tinytemplate::error::Error> for ServerError {
     }
 }
 
-pub(crate) fn run_server(chatters_list: ChattersList, event_list: SafeTwitchEventList) {
-    rouille::start_server("0.0.0.0:12345", move |request| {
-        let response = rouille::match_assets(request, "public/");
+// Ok(generate_credit_page(&chatters_list, &event_list)
+//     .await
+//     .unwrap_or("Fail".to_string()))
 
-        if response.is_success() {
-            return response;
-        }
+pub(crate) async fn run_server(chatters_list: ChattersList, event_list: SafeTwitchEventList) {
+    let static_files = warp::path("static").and(warp::fs::dir("public"));
+    let credits = warp::path::end()
+        .and(warp::any().map(move || chatters_list.clone()))
+        .and(warp::any().map(move || event_list.clone()))
+        .and_then(credit_request);
+    let routes = warp::get().and(credits.or(static_files));
+    let server_addr: SocketAddr = "0.0.0.0:12345".parse().unwrap();
 
-        rouille::router!(request,
-            (GET) (/) => {
-                match generate_credit_page(&chatters_list, &event_list) {
-                    Ok(page) => return rouille::Response::html(page),
-                    Err(e) => eprintln!("{e}"),
-                }
+    warp::serve(routes).run(server_addr).await;
+}
 
-                rouille::Response::empty_404()
-            },
-            _ => rouille::Response::empty_404()
-        )
-    });
+async fn credit_request(
+    chatters_list: ChattersList,
+    event_list: SafeTwitchEventList,
+) -> ::std::result::Result<impl Reply, Infallible> {
+    match generate_credit_page(&chatters_list, &event_list).await {
+        Ok(page) => Ok(warp::reply::html(page).into_response()),
+        Err(e) => Ok(warp::http::Response::builder()
+            .body(Body::from(e.to_string()))
+            .unwrap()),
+    }
 }
 
 fn generate_credits_text<T: IntoIterator + Serialize>(ctx: TemplateContext<T>) -> Result<String> {
@@ -142,13 +152,13 @@ fn chatter_name_formatter(name: &Value, out: &mut String) -> tinytemplate::error
     Ok(())
 }
 
-fn generate_credit_page(
+async fn generate_credit_page(
     chatters_list: &ChattersList,
     event_list: &SafeTwitchEventList,
 ) -> Result<String> {
-    let guard1 = chatters_list.blocking_lock();
-    let guard2 = event_list.get_followers();
-    let guard3 = event_list.get_subscribers();
+    let guard1 = chatters_list.lock().await;
+    let guard2 = event_list.get_followers().await;
+    let guard3 = event_list.get_subscribers().await;
 
     let template_context =
         TemplateContext::new(guard1.to_owned(), guard2.to_owned(), guard3.to_owned());

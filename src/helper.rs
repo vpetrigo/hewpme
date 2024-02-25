@@ -22,12 +22,12 @@ impl TwitchEventList {
         guard.insert(subscriber.into());
     }
 
-    pub fn get_followers(&self) -> MutexGuard<HashSet<String>> {
-        self.followers_list.blocking_lock()
+    pub async fn get_followers(&self) -> MutexGuard<HashSet<String>> {
+        self.followers_list.lock().await
     }
 
-    pub fn get_subscribers(&self) -> MutexGuard<HashSet<String>> {
-        self.subscribers_list.blocking_lock()
+    pub async fn get_subscribers(&self) -> MutexGuard<HashSet<String>> {
+        self.subscribers_list.lock().await
     }
 }
 

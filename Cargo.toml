@@ -21,7 +21,6 @@ reqwest = { version = "~0.11", features = ["rustls"] }
 url = "2.5.0"
 futures = "~0.3"
 warp = "~0.3"
-rouille = "~3.6"
 tinytemplate = "~1.2"
 directories = "~5"
 chrono = { version = "~0.4", features = ["serde"] }
