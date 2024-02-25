@@ -24,15 +24,17 @@ pub(crate) async fn run_eventsub_client(event_list: SafeTwitchEventList) {
             ];
             let token_create_ctx = CreateContext::new(&scopes, false, config::REDIRECT_URL);
             let token_handler = Wrapper::new(token_create_ctx).await;
+            let token: Token = token_handler.get_user_token().into();
 
-            token_handler.get_user_token().into()
+            token
+                .save(config_file)
+                .expect("Unable to save EventSub token");
+
+            token
         }
         Ok(token) => token,
     };
 
-    token
-        .save(config_file)
-        .expect("Unable to save EventSub token");
     let token = token.into_user_token().await;
     let client = HelixClient::<reqwest::Client>::new();
     let channel_name =
