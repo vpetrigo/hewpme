@@ -8,13 +8,16 @@ use chrono::{DateTime, Utc};
 use reqwest::{ClientBuilder, IntoUrl};
 use serde::{Deserialize, Serialize};
 use tokio::runtime::Handle;
+use twitch_api::types::{UserId, UserName};
 use twitch_irc::login::UserAccessToken;
+use twitch_oauth2::client::Client;
 use twitch_oauth2::{
     AccessToken, ClientSecret, CsrfToken, RefreshToken, Scope, TwitchToken, UserToken,
     UserTokenBuilder,
 };
 use url::Url;
 
+use crate::config;
 use crate::utils::{create_auth_channel, run_auth_server};
 
 pub struct Wrapper {
@@ -33,7 +36,7 @@ impl Wrapper {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Token {
     #[allow(clippy::struct_field_names)]
     pub access_token: AccessToken,
@@ -46,7 +49,7 @@ pub struct Token {
 
 impl From<UserToken> for Token {
     fn from(value: UserToken) -> Self {
-        value.into()
+        From::from(&value)
     }
 }
 
@@ -141,19 +144,72 @@ impl Token {
             .redirect(reqwest::redirect::Policy::none())
             .build()
             .expect("Unable to build a client to send request to Twitch API");
-        let token = UserToken::from_existing(
-            &client,
-            self.access_token,
-            self.refresh_token,
-            ClientSecret::from(client_secret),
-        )
-        .await;
+        let is_expired = self.valid_till < chrono::Utc::now();
 
-        match token {
-            Err(e) => panic!("Unable to get token: {e}"),
-            Ok(token) => token,
-        }
+        let token = if is_expired {
+            let user_token = refresh_expired(&self, &client).await;
+            let token: Token = user_token.clone().into();
+
+            token
+                .save(config::get_eventsub_config_file())
+                .expect("Unable to store refreshed token");
+
+            user_token
+        } else {
+            from_existing(
+                &client,
+                &self.access_token,
+                &self.refresh_token,
+                client_secret.as_str(),
+            )
+            .await
+        };
+
+        token
     }
+}
+
+async fn refresh_expired<C: Client>(token: &Token, client: &C) -> UserToken {
+    let client_id = env::var("TWITCH_CLIENT_ID").unwrap();
+    let client_secret = env::var("TWITCH_CLIENT_SECRET").unwrap();
+    let mut user_token = UserToken::from_existing_unchecked(
+        token.access_token.clone(),
+        token.refresh_token.clone(),
+        client_id,
+        Some(ClientSecret::from(client_secret.clone())),
+        UserName::from(""),
+        UserId::from(""),
+        Some(token.scopes.clone().unwrap()),
+        None,
+    );
+    user_token
+        .refresh_token(client)
+        .await
+        .expect("Unable to refresh token");
+    // need this to properly retrieve username, user ID and expires_in info
+    from_existing(
+        client,
+        &user_token.access_token,
+        &user_token.refresh_token,
+        client_secret.as_str(),
+    )
+    .await
+}
+
+async fn from_existing<C: Client>(
+    client: &C,
+    access_token: &AccessToken,
+    refresh_token: &Option<RefreshToken>,
+    client_secret: &str,
+) -> UserToken {
+    UserToken::from_existing(
+        client,
+        access_token.clone(),
+        refresh_token.clone(),
+        ClientSecret::from(client_secret),
+    )
+    .await
+    .expect("Unable to get token")
 }
 
 fn get_token_from_file(config_file: PathBuf) -> io::Result<Token> {
