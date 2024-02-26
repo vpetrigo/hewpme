@@ -95,7 +95,7 @@ pub(crate) async fn run_server(chatters_list: ChattersList, event_list: SafeTwit
 async fn credit_request(
     chatters_list: ChattersList,
     event_list: SafeTwitchEventList,
-) -> ::std::result::Result<impl Reply, Infallible> {
+) -> std::result::Result<impl Reply, Infallible> {
     match generate_credit_page(&chatters_list, &event_list).await {
         Ok(page) => Ok(warp::reply::html(page).into_response()),
         Err(e) => Ok(warp::http::Response::builder()
